@@ -202,7 +202,7 @@ def main():
     unknown = 0
     #(associate)
     print("Marge-1")
-    with open( "{0}_{1}_{2}.csv".format(DetailResultsFileHead, "associate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
+    with open( "{0}_{1}_{2}_{3}.csv".format(DetailResultsFileHead, args.Interval, "associate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
         for dirpath, dirnames, filenames in os.walk("."):
             for fileName in filenames:
                 if "temp_result_associated_" in fileName:
@@ -229,7 +229,7 @@ def main():
 
     #(unassociate)
     print("Marge-2")
-    with open( "{0}_{1}_{2}.csv".format(DetailResultsFileHead, "unassociate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
+    with open( "{0}_{1}_{2}_{3}.csv".format(DetailResultsFileHead, args.Interval, "unassociate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
         for dirpath, dirnames, filenames in os.walk("."):
             for fileName in filenames:
                 if "temp_result_unassociated_" in fileName:
