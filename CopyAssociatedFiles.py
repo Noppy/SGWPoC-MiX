@@ -123,7 +123,7 @@ def main():
             src = random.sample(filelist, 2)
 
             # run process
-            cmd = [ 'python', ExecCommand, '--basetime', str(basetime), '--output', "temp_associated_result_{0:04d}.csv".format(index), src[0][0], src[1][0], args.dest ]
+            cmd = [ 'python', ExecCommand, '--basetime', str(basetime), '--output', "temp_result_associated_{0:04d}.csv".format(index), src[0][0], src[1][0], args.dest ]
             process.append( subprocess.Popen(cmd) )
             index += 1
 

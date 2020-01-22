@@ -3,7 +3,7 @@ Results*
 copy_list*.csv
 output_do_FileCopy.csv
 AssociatedFileList.csv
-temp_associated_result_*
+temp_result_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

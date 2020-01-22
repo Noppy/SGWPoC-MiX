@@ -35,6 +35,7 @@ import os
 SummaryResultCSVFile   = 'ResultsSummary.csv'
 DetailResultsFileHead  = 'ResultsDetail'
 COMMAND_AssociatedFile = './CopyAssociatedFiles.py'
+ExecCommand            = './_do_FileCopy.py'
 
 # ---------------------------
 # Initialize Section
@@ -70,6 +71,20 @@ def get_args():
         required=False,
         help='Specify a pattern to extract specific size files in associated files')
 
+    parser.add_argument('-I', '--Interval',
+        action='store',
+        default=9,
+        type=int,
+        required=False,
+        help='Specify interval(seconds) to execute copying unassociated files job')
+
+    parser.add_argument('-T', '--Times',
+        action='store',
+        default=3,
+        type=int,
+        required=False,
+        help='Specify number of times to execute copying unassociated files job')
+
     parser.add_argument('UnassociatedFileList',
         action='store',
         help='Specify a csv file name that is "unassociated" files list.')
@@ -99,29 +114,31 @@ def main():
 
     # Pre-Read a directory recursively,
     # and create associated files list
-    #try:
-    #    fp = open(args.AssociatedFileListCSV, "w")
-    #    writer = csv.writer(fp, lineterminator='\n')
-    #except:
-    #    e = sys.exc_info()
-    #    logging.error("{}".format(e))
-    #    return(-1)
-    #else:
-    #    print("Pre-Read a directory(2-3 minutes): {}".format(args.PreReadDir))
-    #    if not os.path.isdir(args.PreReadDir):
-    #        print( "Invalid directory: {}\n".format(args.PreReadDir) )
-    #        return(-1)
-    #
-    #    for dirpath, dirnames, filenames in os.walk(args.PreReadDir):
-    #        for fileName in filenames:
-    #            if args.PatternToExtract in fileName:
-    #                row = [ "{0}{1}{2}".format(dirpath, delimiter, fileName) ]
-    #                writer.writerow( row )
-    #
-    #                if args.debug:
-    #                    print( "{}\n".format(row[0]) )
-    #
-    #    fp.close
+    try:
+        fp = open(args.AssociatedFileListCSV, "w")
+        writer = csv.writer(fp, lineterminator='\n')
+    except:
+        e = sys.exc_info()
+        logging.error("{}".format(e))
+        return(-1)
+    else:
+        print("Pre-Read a directory(2-3 minutes): {}".format(args.PreReadDir))
+        if not os.path.isdir(args.PreReadDir):
+            print( "Invalid directory: {}\n".format(args.PreReadDir) )
+            return(-1)
+    
+        for dirpath, dirnames, filenames in os.walk(args.PreReadDir):
+            for fileName in filenames:
+                if args.PatternToExtract in fileName:
+                    row = [ "{0}{1}{2}".format(dirpath, delimiter, fileName) ]
+                    writer.writerow( row )
+    
+                    if args.debug:
+                        print( "{}\n".format(row[0]) )
+    
+        # finish write
+        fp.flush()
+        fp.close()
 
     # Read the Copy File List
     print("Read unassociated files list")
@@ -130,7 +147,6 @@ def main():
         reader = csv.reader(f)
         for row in reader:
             copylist.append(row)
-
 
     # Run Test
     print( "Run CopyFile programs." )
@@ -141,30 +157,32 @@ def main():
     cmd = [ 'python', COMMAND_AssociatedFile, '--basetime', str(BaseTime), '--dest', args.dest ]
     CopyAssociatedFileProcess = subprocess.Popen(cmd)
 
+    # interval
+    time.sleep(10)
 
-    time.sleep(3)
-
-    print("kill")
-    try:
-        CopyAssociatedFileProcess.wait(timeout=0.001)
-    except:
-        CopyAssociatedFileProcess.terminate()
-
-
-    return
-
-
-    process = []
-    idx = 0
+    # execute job that is copying "unassociated" files
+    count = 0
+    UnassociatedFileProcess = []
     for row in copylist:
-        cmd = [ 'python', ExecCommand, '--basetime', str(BaseTime), '--output', "temp_result_{0:04d}.csv".format(idx), row[0], row[1], row[2] ]
-        process.append( subprocess.Popen(cmd) )
-        idx += 1
+        cmd = [ 'python', ExecCommand, '--basetime', str(BaseTime), '--output', "temp_result_unassociated_{0:04d}.csv".format(count), row[0], row[1], row[2] ]
+        UnassociatedFileProcess.append( subprocess.Popen(cmd) )
+        count += 1
 
+        # Interval
+        time.sleep(args.Interval)
+
+        # Check number of times
+        if count >= args.Times:
+            break
+    
     # Wait for process to finish
-    for p in process:
+    for p in UnassociatedFileProcess:
         print("wait")
         p.wait()
+
+    # Terminal copying associated files job
+    print("Terminal a copying associated files job")
+    CopyAssociatedFileProcess.terminate()
 
     # Finish
     EndTime = time.time()
@@ -176,30 +194,63 @@ def main():
     EndDate   = datetime.datetime.fromtimestamp( EndTime ).strftime("%Y/%m/%d %H:%M:%S")
 
     # Check results and Marge result file
+    repatter_success = re.compile(r"Success")
+    repatter_failed  = re.compile(r"Failed")
     total = 0
     success = 0
     failed = 0
     unknown = 0
-    repatter_success = re.compile(r"Success")
-    repatter_failed  = re.compile(r"Failed")
-    with open( "{0}_{1:04d}_{2}.csv".format(DetailResultsFileHead, NumOfFile, datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
-        for i in range(0,NumOfFile):
-            try:
-                fp = open( "temp_result_{0:04d}.csv".format(i), 'r')
-                for line in fp:
-                    if repatter_success.search(line):
-                        success += 1
-                    elif repatter_failed.search(line):
-                        failed += 1
-                    else:
-                        unknown += 1
-                    total += 1
-                    MargedFiled.write(line)
-                MargedFiled.flush()
-                fp.close()
-            except:
-                e = sys.exc_info()
-                logging.error("{}".format(e))
+    #(associate)
+    print("Marge-1")
+    with open( "{0}_{1}_{2}.csv".format(DetailResultsFileHead, "associate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
+        for dirpath, dirnames, filenames in os.walk("."):
+            for fileName in filenames:
+                if "temp_result_associated_" in fileName:
+                    try:
+                        fp = open( "{0}{1}{2}".format(dirpath, delimiter, fileName), 'r')
+                        for line in fp:
+                            if repatter_success.search(line):
+                                success += 1
+                            elif repatter_failed.search(line):
+                                failed += 1
+                            else:
+                                unknown += 1
+                                total += 1
+                            
+                            MargedFiled.write(line)
+                        #close
+                        MargedFiled.flush()
+                        fp.close()
+                    except:
+                        e = sys.exc_info()
+                        logging.error("{}".format(e))
+            
+        MargedFiled.close()
+
+    #(unassociate)
+    print("Marge-2")
+    with open( "{0}_{1}_{2}.csv".format(DetailResultsFileHead, "unassociate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
+        for dirpath, dirnames, filenames in os.walk("."):
+            for fileName in filenames:
+                if "temp_result_unassociated_" in fileName:
+                    try:
+                        fp = open( "{0}{1}{2}".format(dirpath, delimiter, fileName), 'r')
+                        for line in fp:
+                            if repatter_success.search(line):
+                                success += 1
+                            elif repatter_failed.search(line):
+                                failed += 1
+                            else:
+                                unknown += 1
+                                total += 1
+                            
+                            MargedFiled.write(line)
+                        #close
+                        MargedFiled.flush()
+                        fp.close()
+                    except:
+                        e = sys.exc_info()
+                        logging.error("{}".format(e))
             
         MargedFiled.close()
 
@@ -207,11 +258,10 @@ def main():
     with open(SummaryResultCSVFile, "a") as FpSummary:
         writer = csv.writer(FpSummary, lineterminator='\n')
 
-        print( "NumOfFiles, NumOfParallels, ExeTime(sec), StartTime, EndTime, SuccessedFiles, FailedFiles, UnknownFIles, TotalFiles" )
-        row = [ NumOfFile, NumOfFile, time_delta, StartDate, EndDate, success, failed, unknown, total ]
+        print( "ExeTime(sec), StartTime, EndTime, SuccessedFiles, FailedFiles, UnknownFIles, TotalFiles" )
+        row = [ time_delta, StartDate, EndDate, success, failed, unknown, total ]
         print (row)
         writer.writerow( row )
-
 
     # Delete temporary files
     for fn in glob.glob( "temp_result_*.csv" ):
