@@ -126,6 +126,7 @@ def main():
             cmd = [ 'python', ExecCommand, '--basetime', str(basetime), '--output', "temp_result_associated_{0:04d}.csv".format(index), src[0][0], src[1][0], args.dest ]
             process.append( subprocess.Popen(cmd) )
             index += 1
+            time.sleep(0.1)
 
         # Wait
         if args.debug:
