@@ -26,6 +26,10 @@ cd SGWPoC-MiX.git
 ```
 
 ## 実行
+### ファイルサーバ初期化
+キャッシュされないよう、ファイルサーバの既存設定をクリアし再セットアップをします。
+
+### 検証実施
 ```sh
 python.exe .\Execute_MixTest.py --dest D:\ --PreReadDir F:\20150101\ .\UnassociatedFiles.csv --Times 3 --Interval 9
 ```
