@@ -57,19 +57,26 @@ def get_args():
         required=True,
         help='Specify a pre-read directory path.')
 
-    parser.add_argument('-a', '--AssociatedFileListCSV',
-        action='store',
-        default='AssociatedFileList.csv',
-        type=str,
-        required=False,
-        help='Specify a csv file name that is associated files list.')
-
     parser.add_argument('-P', '--PatternToExtract',
         action='store',
         default='test-001000KB_',
         type=str,
         required=False,
         help='Specify a pattern to extract specific size files in associated files')
+
+    parser.add_argument('-m', '--parallel',
+        action='store',
+        default='5',
+        type=int,
+        required=False,
+        help='Specify number of AssociatedFileCopy Jobs parallel.')
+
+    parser.add_argument('-a', '--AssociatedFileListCSV',
+        action='store',
+        default='AssociatedFileList.csv',
+        type=str,
+        required=False,
+        help='Specify a csv file name that is associated files list.')
 
     parser.add_argument('-I', '--Interval',
         action='store',
@@ -154,7 +161,7 @@ def main():
     BaseTime = time.monotonic_ns()
 
     # execute job that is copying associated files
-    cmd = [ 'python', COMMAND_AssociatedFile, '--basetime', str(BaseTime), '--dest', args.dest ]
+    cmd = [ 'python', COMMAND_AssociatedFile, '--basetime', str(BaseTime), '--dest', args.dest, '--parallel', str(args.parallel) ]
     CopyAssociatedFileProcess = subprocess.Popen(cmd)
 
     # interval
@@ -202,7 +209,7 @@ def main():
     unknown = 0
     #(associate)
     print("Marge-1")
-    with open( "{0}_{1}_{2}_{3}.csv".format(DetailResultsFileHead, args.Interval, "associate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
+    with open( "{0}_{1}_{2}_{3}_{4}.csv".format(DetailResultsFileHead, args.parallel, args.Interval, "associate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
         for dirpath, dirnames, filenames in os.walk("."):
             for fileName in filenames:
                 if "temp_result_associated_" in fileName:
@@ -229,7 +236,7 @@ def main():
 
     #(unassociate)
     print("Marge-2")
-    with open( "{0}_{1}_{2}_{3}.csv".format(DetailResultsFileHead, args.Interval, "unassociate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
+    with open( "{0}_{1}_{2}_{3}_{4}.csv".format(DetailResultsFileHead, args.parallel, args.Interval, "unassociate", datetime.datetime.fromtimestamp( StartTime ).strftime("%Y%m%d_%H%M%S")), "w" ) as MargedFiled:
         for dirpath, dirnames, filenames in os.walk("."):
             for fileName in filenames:
                 if "temp_result_unassociated_" in fileName:
