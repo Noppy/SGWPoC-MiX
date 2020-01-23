@@ -31,7 +31,7 @@ cd SGWPoC-MiX.git
 
 ### 検証実施
 ```sh
-python.exe .\Execute_MixTest.py --dest D:\ --PreReadDir F:\20150101\ .\UnassociatedFiles.csv --Times 3 --Interval 9
+python.exe .\Execute_MixTest.py  --parallel 5 --Times 3 --Interval 2 .\UnassociatedFiles.csv
 ```
 
 ## 実行結果
