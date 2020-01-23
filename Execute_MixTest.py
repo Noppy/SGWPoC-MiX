@@ -171,6 +171,7 @@ def main():
     count = 0
     UnassociatedFileProcess = []
     for row in copylist:
+        print("Execute a unassociated files copy job")
         cmd = [ 'python', ExecCommand, '--basetime', str(BaseTime), '--output', "temp_result_unassociated_{0:04d}.csv".format(count), row[0], row[1], row[2] ]
         UnassociatedFileProcess.append( subprocess.Popen(cmd) )
         count += 1
@@ -186,6 +187,9 @@ def main():
     for p in UnassociatedFileProcess:
         print("wait")
         p.wait()
+
+    # Interval
+    time.sleep(5)
 
     # Terminal copying associated files job
     print("Terminal a copying associated files job")
